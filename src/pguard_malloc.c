@@ -936,12 +936,12 @@ pguard_enabled(void)
 	if (env_var("MallocPGuard")) {
 		return env_bool("MallocPGuard");
 	}
-#if CONFIG_FEATUREFLAGS_SIMPLE
-	return os_feature_enabled_simple(libmalloc, PGuardAllProcesses, FALSE) ||
-			(os_feature_enabled_simple(libmalloc, PGuardViaLaunchd, FALSE) && env_bool("MallocPGuardViaLaunchd"));
-#else
+//#if CONFIG_FEATUREFLAGS_SIMPLE
+//	return os_feature_enabled_simple(libmalloc, PGuardAllProcesses, FALSE) ||
+//			(os_feature_enabled_simple(libmalloc, PGuardViaLaunchd, FALSE) && env_bool("MallocPGuardViaLaunchd"));
+//#else
 	return FALSE;
-#endif
+//#endif
 }
 
 static const double k_slot_multiplier = 10.0;
@@ -969,11 +969,11 @@ compute_max_allocations(size_t memory_budget_in_kb)
 static uint32_t
 choose_sample_rate(void)
 {
-#if CONFIG_FEATUREFLAGS_SIMPLE
-	if (os_feature_enabled_simple(libmalloc, PGuardAllProcesses, FALSE)) {
-		return 1000;
-	}
-#endif
+//#if CONFIG_FEATUREFLAGS_SIMPLE
+//	if (os_feature_enabled_simple(libmalloc, PGuardAllProcesses, FALSE)) {
+//		return 1000;
+//	}
+//#endif
 	uint32_t rates[] = {10, 50, 100, 500, 1000, 5000};
 	const uint32_t count = (sizeof(rates) / sizeof(rates[0]));
 	return rates[rand_uniform(count)];

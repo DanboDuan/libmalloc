@@ -142,7 +142,7 @@ nano_common_init(const char *envp[], const char *apple[], const char *bootargs)
 		nano_init(envp, apple, bootargs);
 		break;
 	case NANO_V2:
-		nanov2_init(envp, apple, bootargs);
+//		nanov2_init(envp, apple, bootargs);
 		break;
 	default:
 		break;
@@ -197,7 +197,7 @@ nano_common_configure(void)
 		nano_configure();
 		break;
 	case NANO_V2:
-		nanov2_configure();
+//		nanov2_configure();
 		break;
 	default:
 		break;

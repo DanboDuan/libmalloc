@@ -1862,7 +1862,8 @@ nano_create_zone(malloc_zone_t *helper_zone, unsigned debug_flags)
 	 * should manipulate the nanozone, and these should not run if we failed
 	 * to create the zone.
 	 */
- 	MALLOC_ASSERT(_malloc_engaged_nano == NANO_V1);
+	//
+// 	MALLOC_ASSERT(_malloc_engaged_nano == NANO_V1);
 
 	/* get memory for the zone. */
 	nanozone = nano_common_allocate_based_pages(NANOZONE_PAGED_SIZE, 0, 0, VM_MEMORY_MALLOC, 0);

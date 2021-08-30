@@ -63,7 +63,7 @@
 #include <os/once_private.h>
 #include <os/overflow.h>
 #if !TARGET_OS_DRIVERKIT
-# include <os/feature_private.h>
+//# include <os/feature_private.h>
 #endif
 #include <os/tsd.h>
 #include <paths.h>

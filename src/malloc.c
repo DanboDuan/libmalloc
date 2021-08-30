@@ -66,6 +66,8 @@ unsigned malloc_check_each = 1000;
 static int malloc_check_sleep = 100; // default 100 second sleep
 static int malloc_check_abort = 0;   // default is to sleep, not abort
 
+static os_once_t _malloc_initialize_pred;
+
 static
 struct msl {
 	void *dylib;
@@ -194,11 +196,11 @@ __entropy_from_kernel(const char *str)
 }
 
 #if TARGET_OS_OSX && defined(__x86_64__)
-static uint64_t
-__is_translated(void)
-{
-	return (*(uint64_t*)_COMM_PAGE_CPU_CAPABILITIES64) & kIsTranslated;
-}
+//static uint64_t
+//__is_translated(void)
+//{
+//	return (*(uint64_t*)_COMM_PAGE_CPU_CAPABILITIES64) & kIsTranslated;
+//}
 #endif /* TARGET_OS_OSX */
 
 static void
@@ -239,9 +241,9 @@ __malloc_init_from_bootargs(const char *bootargs)
 #if CONFIG_MEDIUM_ALLOCATOR
 #if TARGET_OS_OSX
 #if defined(__x86_64__)
-	if (__is_translated()) {
-		magazine_medium_active_threshold = 0;
-	}
+//	if (__is_translated()) {
+//		magazine_medium_active_threshold = 0;
+//	}
 #elif defined(__arm64__)
 	magazine_medium_active_threshold = 0;
 #endif
@@ -307,9 +309,9 @@ __malloc_init(const char *apple[])
 	// into.
 	char bootargs[1024] = { '\0' };
 	bool allow_bootargs = true;
-#if CONFIG_FEATUREFLAGS_SIMPLE
-	allow_bootargs &= os_feature_enabled_simple(libmalloc, EnableBootArgs, false);
-#endif
+//#if CONFIG_FEATUREFLAGS_SIMPLE
+//	allow_bootargs &= os_feature_enabled_simple(libmalloc, EnableBootArgs, false);
+//#endif
 #if defined(_COMM_PAGE_DEV_FIRM)
 	allow_bootargs &= !!*((uint32_t *)_COMM_PAGE_DEV_FIRM);
 #endif // _COMM_PAGE_DEV_FIRM
@@ -858,11 +860,11 @@ _malloc_initialize(const char *apple[], const char *bootargs)
 
 	set_flags_from_environment(); // will only set flags up to two times
 
-#if CONFIG_NANOZONE
-	// TODO: envp should be passed down from Libsystem
-	const char **envp = (const char **)*_NSGetEnviron();
-	nano_common_init(envp, apple, bootargs);
-#endif
+//#if CONFIG_NANOZONE
+//	// TODO: envp should be passed down from Libsystem
+//	const char **envp = (const char **)*_NSGetEnviron();
+//	nano_common_init(envp, apple, bootargs);
+//#endif
 
 	const uint32_t k_max_zones = 3;
 	malloc_zone_t *zone_stack[k_max_zones];
@@ -880,11 +882,12 @@ _malloc_initialize(const char *apple[], const char *bootargs)
 	malloc_zone_t *helper_zone = zone_stack[num_zones - 1];
 	malloc_zone_t *nano_zone = NULL;
 
-	if (_malloc_engaged_nano == NANO_V2) {
-		nano_zone = nanov2_create_zone(helper_zone, malloc_debug_flags);
-	} else if (_malloc_engaged_nano == NANO_V1) {
-		nano_zone = nano_create_zone(helper_zone, malloc_debug_flags);
-	}
+//	if (_malloc_engaged_nano == NANO_V2) {
+//		nano_zone = nanov2_create_zone(helper_zone, malloc_debug_flags);
+//	} else if (_malloc_engaged_nano == NANO_V1) {
+//		nano_zone = nano_create_zone(helper_zone, malloc_debug_flags);
+//	}
+	nano_zone = nano_create_zone(helper_zone, malloc_debug_flags);
 
 	if (nano_zone) {
 		initial_nano_zone = nano_zone;
@@ -915,9 +918,17 @@ _malloc_initialize(const char *apple[], const char *bootargs)
 	// (unsigned)&malloc_num_zones);
 }
 
+MALLOC_ALWAYS_INLINE
+static inline void
+_malloc_initialize_once(void)
+{
+	os_once(&_malloc_initialize_pred, NULL, _malloc_initialize);
+}
+
 static inline malloc_zone_t *
 inline_malloc_default_zone(void)
 {
+	_malloc_initialize_once();
 	// malloc_report(ASL_LEVEL_INFO, "In inline_malloc_default_zone with %d %d\n", malloc_num_zones, malloc_has_debug_zone);
 	return malloc_zones[0];
 }
@@ -1496,6 +1507,7 @@ malloc_set_errno_fast(malloc_zone_options_t mzo, int err)
 	}
 }
 
+//
 MALLOC_NOINLINE
 static void *
 _malloc_zone_malloc(malloc_zone_t *zone, size_t size, malloc_zone_options_t mzo)
@@ -1542,7 +1554,7 @@ _malloc_zone_calloc(malloc_zone_t *zone, size_t num_items, size_t size,
 	if (malloc_check_start) {
 		internal_check();
 	}
-
+	//
 	ptr = zone->calloc(zone, num_items, size);
 
 	if (os_unlikely(malloc_logger)) {
@@ -2114,19 +2126,19 @@ malloc_enter_process_memory_limit_warn_mode(void)
 void
 malloc_memory_event_handler(unsigned long event)
 {
-	if (event & NOTE_MEMORYSTATUS_PRESSURE_WARN) {
-		malloc_zone_pressure_relief(0, 0);
-	}
-
-	if ((event & NOTE_MEMORYSTATUS_MSL_STATUS) != 0 && (event & ~NOTE_MEMORYSTATUS_MSL_STATUS) == 0) {
-		malloc_register_stack_logger();
-	}
-
-#if ENABLE_MEMORY_RESOURCE_EXCEPTION_HANDLING
-	if (event & (NOTE_MEMORYSTATUS_PROC_LIMIT_WARN | NOTE_MEMORYSTATUS_PROC_LIMIT_CRITICAL | NOTE_MEMORYSTATUS_PRESSURE_CRITICAL)) {
-		malloc_register_stack_logger();
-	}
-#endif // ENABLE_MEMORY_RESOURCE_EXCEPTION_HANDLING
+//	if (event & NOTE_MEMORYSTATUS_PRESSURE_WARN) {
+//		malloc_zone_pressure_relief(0, 0);
+//	}
+//
+//	if ((event & NOTE_MEMORYSTATUS_MSL_STATUS) != 0 && (event & ~NOTE_MEMORYSTATUS_MSL_STATUS) == 0) {
+//		malloc_register_stack_logger();
+//	}
+//
+//#if ENABLE_MEMORY_RESOURCE_EXCEPTION_HANDLING
+//	if (event & (NOTE_MEMORYSTATUS_PROC_LIMIT_WARN | NOTE_MEMORYSTATUS_PROC_LIMIT_CRITICAL | NOTE_MEMORYSTATUS_PRESSURE_CRITICAL)) {
+//		malloc_register_stack_logger();
+//	}
+//#endif // ENABLE_MEMORY_RESOURCE_EXCEPTION_HANDLING
 	
 	if (msl.handle_memory_event) {
 		// Let MSL see the event.
@@ -2456,11 +2468,12 @@ _malloc_fork_child(void)
 {
 #if CONFIG_NANOZONE
 	if (_malloc_entropy_initialized) {
-		if (_malloc_engaged_nano == NANO_V2) {
-			nanov2_forked_zone((nanozonev2_t *)initial_nano_zone);
-		} else if (_malloc_engaged_nano == NANO_V1) {
-			nano_forked_zone((nanozone_t *)initial_nano_zone);
-		}
+//		if (_malloc_engaged_nano == NANO_V2) {
+//			nanov2_forked_zone((nanozonev2_t *)initial_nano_zone);
+//		} else if (_malloc_engaged_nano == NANO_V1) {
+//			nano_forked_zone((nanozone_t *)initial_nano_zone);
+//		}
+		nano_forked_zone((nanozone_t *)initial_nano_zone);
 	}
 #endif
 	return _malloc_reinit_lock_all(msl.fork_child);
